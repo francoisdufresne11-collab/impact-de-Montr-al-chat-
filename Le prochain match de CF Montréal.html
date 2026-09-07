@@ -43,6 +43,8 @@ header p{opacity:.75;margin-top:6px;font-size:.85rem}
 @keyframes blink{50%{opacity:.35}}
 .cd{font-variant-numeric:tabular-nums;background:#060b16;border:1px dashed #33456e;border-radius:10px;padding:7px 12px;font-size:.92rem;color:#a5b4fc;margin-top:8px;display:inline-block;font-weight:700}
 footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height:1.6}
+#salon-live{position:fixed;left:8px;bottom:8px;max-width:62vw;background:#052e16;color:#86efac;border:1px solid #16a34a;border-radius:10px;padding:6px 10px;font-size:.62rem;font-family:monospace;z-index:900;word-break:break-all;line-height:1.5}
+#salon-live.err{background:#450a0a;color:#fca5a5;border-color:#dc2626}
 #chat-btn{position:fixed;right:16px;bottom:16px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#0047ab);border:2px solid #60a5fa;color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.55);z-index:1000}
 #chat-btn .dot{position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:20px;min-width:24px;height:24px;font-size:.72rem;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0b1220}
 #chat-panel{position:fixed;right:16px;bottom:88px;width:330px;max-width:94vw;height:460px;max-height:72vh;background:#0f172a;border:2px solid #3b82f6;border-radius:16px;display:none;flex-direction:column;overflow:hidden;z-index:1001;box-shadow:0 14px 44px rgba(0,0,0,.65)}
@@ -55,7 +57,7 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
 #chat-actions button{width:28px;height:28px;border-radius:50%;font-weight:800;cursor:pointer;font-size:.85rem;border:0;color:#fff}
 #chat-notif{background:#7c3aed}
 #chat-notif.on{background:#16a34a;box-shadow:0 0 8px #16a34a}
-#chat-cfg{background:#f59e0b}
+#chat-reco{background:#0ea5e9}
 #chat-close{background:#dc2626}
 #chat-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;background:#0b1220}
 .msg{max-width:85%;padding:8px 10px;border-radius:12px;background:#1e293b;font-size:.86rem;overflow-wrap:break-word}
@@ -211,22 +213,24 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
 
   <footer>
     Heures affichées : heure de l'Est (Montréal) · Matchs RDS précédés d'une émission d'avant-match de 30 min<br>
-    Sources : calendrier MLS 2026 &amp; RDS.ca · Page v2.0<br>
-    💬 Chat en direct via Firebase (Google) — fonctionne depuis le fichier OU un lien web
+    Sources : calendrier MLS 2026 &amp; RDS.ca · Page v3.0<br>
+    💬 Chat temps réel via MQTT public — fonctionne depuis le fichier OU un lien web
   </footer>
 </div>
+
+<div id="salon-live">📡 connexion…</div>
 
 <button id="chat-btn" title="Chat des partisans">💬<span class="dot" id="chat-dot">0</span></button>
 <div id="chat-panel">
   <div id="chat-head">
     <div>
       <strong>💬 Chat des partisans</strong>
-      <div id="chat-status">démarrage…</div>
+      <div id="chat-status">connexion…</div>
       <div id="chat-debug">🧪 …</div>
     </div>
     <div id="chat-actions">
       <button id="chat-notif" title="Notifications">🔕</button>
-      <button id="chat-cfg" title="Configurer Firebase">⚙️</button>
+      <button id="chat-reco" title="Reconnecter">🔄</button>
       <button id="chat-close" title="Fermer">✕</button>
     </div>
   </div>
@@ -237,9 +241,7 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
   </form>
 </div>
 
-<!-- SDK Firebase (nécessite Internet) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/mqttws31.min.js"></script>
 
 <script>
 function pad(n){return String(n).padStart(2,'0');}
@@ -315,26 +317,21 @@ function tick(){
 tick();
 setInterval(tick,1000);
 
-/* ============ CHAT v2.0 — FIREBASE (aucun serveur, marche depuis le fichier) ============ */
-
-/* 👉 COLLE TA CONFIG FIREBASE ICI (remplace null par ton bloc entre accolades { ... })
-   Obtenue sur console.firebase.google.com → Paramètres du projet → Tes applications → </> Web
-   Si tu laisses null, le chat te la DEMANDERA à la première ouverture et la mémorisera. */
-var FIREBASE_CONFIG = null;
-
-var chatRef=null, chatPret=false, demarrage=Date.now();
+/* ============ CHAT v3.0 — MQTT PUBLIC (aucun serveur, aucun compte) ============ */
+var TOPIC='cfm-partisans/x7k2q9/salon';  /* 👈 le salon — change-le pour un salon privé */
 
 var chatBtn=document.getElementById('chat-btn'),
     panel=document.getElementById('chat-panel'),
     closeBtn=document.getElementById('chat-close'),
+    recoBtn=document.getElementById('chat-reco'),
     notifBtn=document.getElementById('chat-notif'),
-    cfgBtn=document.getElementById('chat-cfg'),
     dot=document.getElementById('chat-dot'),
     msgs=document.getElementById('chat-msgs'),
     form=document.getElementById('chat-form'),
     input=document.getElementById('chat-in'),
     statusEl=document.getElementById('chat-status'),
-    debugEl=document.getElementById('chat-debug');
+    debugEl=document.getElementById('chat-debug'),
+    salonLive=document.getElementById('salon-live');
 
 var store=(function(){
   try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return localStorage;}
@@ -343,10 +340,15 @@ var store=(function(){
 var cid=store.getItem('cfm-cid');
 if(!cid){cid=Math.random().toString(36).slice(2)+Date.now().toString(36);store.setItem('cfm-cid',cid);}
 var pseudo=store.getItem('cfm-pseudo')||'';
-var unread=0, open=false;
+var unread=0, open=false, errCount=0, recvCount=0, connecte=false;
 
 function setStatus(t){statusEl.textContent=t;}
 function heure(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());}
+function barre(ok){
+  if(ok){salonLive.classList.remove('err');salonLive.textContent='📡 '+TOPIC+' · 🟢 · reçus:'+recvCount+' · '+heure();}
+  else{salonLive.classList.add('err');salonLive.textContent='📡 '+TOPIC+' · 🔴 déconnecté (x'+errCount+') · '+heure();}
+}
+function debug(){debugEl.textContent='🧪 reçus:'+recvCount+' · erreurs:'+errCount+' · '+heure();}
 function beep(){
   try{
     var C=window.AudioContext||window.webkitAudioContext;
@@ -407,66 +409,57 @@ function addMsg(who,text,moi,time){
   msgs.scrollTop=msgs.scrollHeight;
 }
 
-function demanderConfig(){
-  var txt=prompt('Colle ici ta config Firebase — le bloc { apiKey: ..., databaseURL: ... } :\n(de console.firebase.google.com → Paramètres projet → </> Web)');
-  if(!txt)return null;
-  try{
-    var cfg=(new Function('return ('+txt+')'))();
-    if(cfg && cfg.databaseURL){store.setItem('cfm-fb',JSON.stringify(cfg));return cfg;}
-  }catch(e){}
-  sysMsg('⚠️ Config invalide — copie le bloc complet AVEC les accolades { }');
-  return null;
-}
-cfgBtn.onclick=function(){var c=demanderConfig();if(c){FIREBASE_CONFIG=c;bootFirebase();}};
-
-function bootFirebase(){
-  var cfg=FIREBASE_CONFIG;
-  if(!cfg){try{cfg=JSON.parse(store.getItem('cfm-fb')||'null');}catch(e){}}
-  if(!cfg){
-    setStatus('⚙️ Config Firebase manquante — touche le bouton orange');
-    debugEl.textContent='🧪 1. console.firebase.google.com → projet → Realtime Database → copier config';
+var client=null;
+function connecter(){
+  if(typeof Paho==='undefined'||!Paho.MQTT){
+    setStatus('🔴 Librairie MQTT pas chargée — Internet requis');
+    barre(false);debug();
     return;
   }
-  FIREBASE_CONFIG=cfg;
-  if(typeof firebase==='undefined'){
-    setStatus('🔴 SDK Firebase pas chargé — Internet requis, recharge la page');
-    return;
-  }
-  try{firebase.initializeApp(cfg);}catch(e){}
-  try{
-    var dba=firebase.database();
-    dba.ref('.info/connected').on('value',function(s){
-      if(s.val()){
-        setStatus('🟢 en ligne · Firebase · salon partagé avec tous les détenteurs du fichier');
-      }else{
-        setStatus('🔴 connexion au salon…');
-      }
-    });
-    chatRef=dba.ref('cfm_salon');
-    chatRef.limitToLast(100).on('child_added',function(snap){
-      var m=snap.val();
-      if(!m||!m.t)return;
-      if(m.i===cid)return;
-      addMsg(m.n||'Supporter',m.t,false,m.time);
-      if(chatPret){
-        unread++;
-        dot.style.display='flex';
-        dot.textContent=unread>99?'99+':unread;
-        beep();
-        if(navigator.vibrate){try{navigator.vibrate([200,100,200]);}catch(e){}}
-        document.title='('+unread+') CF Montréal — Matchs';
-        notify('💬 '+(m.n||'Supporter'),m.t);
-      }
-      debugEl.textContent='🧪 reçu en direct · '+heure();
-    });
-    chatPret=false;
-    setTimeout(function(){chatPret=true;},4000);
-    sysMsg('✅ Chat connecté! Tous ceux qui ont ce fichier sont dans le même salon.');
-  }catch(e){
-    setStatus('🔴 Erreur Firebase : '+e.message);
-  }
+  if(client&&client.isConnected())return;
+  setStatus('🟡 connexion au salon…');
+  client=new Paho.MQTT.Client('broker.emqx.io',8084,'/mqtt','cfm-'+cid);
+  client.onConnectionLost=function(){
+    connecte=false;errCount++;
+    setStatus('🔴 connexion perdue — reconnexion…');
+    barre(false);debug();
+    setTimeout(connecter,3000);
+  };
+  client.onMessageArrived=function(m){
+    var o;
+    try{o=JSON.parse(m.payloadString);}catch(e){return;}
+    if(!o||!o.t)return;
+    recvCount++;debug();barre(true);
+    if(o.i===cid)return;
+    addMsg(o.n||'Supporter',o.t,false,o.tm);
+    unread++;
+    dot.style.display='flex';
+    dot.textContent=unread>99?'99+':unread;
+    beep();
+    document.title='('+unread+') CF Montréal — Matchs';
+    notify('💬 '+(o.n||'Supporter'),o.t);
+    if(navigator.vibrate){try{navigator.vibrate([200,100,200]);}catch(e){}}
+  };
+  client.connect({
+    useSSL:true,timeout:12,keepAliveInterval:30,cleanSession:true,
+    onSuccess:function(){
+      connecte=true;
+      client.subscribe(TOPIC);
+      setStatus('🟢 en ligne · salon : '+TOPIC);
+      barre(true);debug();
+      sysMsg('✅ Connecté au salon temps réel! Tous ceux qui ont ce fichier te lisent.');
+    },
+    onFailure:function(){
+      connecte=false;errCount++;
+      setStatus('🔴 échec de connexion — nouvel essai…');
+      barre(false);debug();
+      setTimeout(connecter,5000);
+    }
+  });
 }
-bootFirebase();
+connecter();
+recoBtn.onclick=function(){errCount=0;connecter();};
+window.addEventListener('online',function(){connecter();});
 
 function ouvrir(){
   open=true;
@@ -489,22 +482,28 @@ form.onsubmit=function(ev){
   ev.preventDefault();
   var t=input.value.trim();
   if(!t)return;
-  if(!chatRef){
-    var c=demanderConfig();
-    if(c){FIREBASE_CONFIG=c;bootFirebase();}
-    if(!chatRef){sysMsg('⚙️ Configure Firebase d\'abord (bouton orange)');return;}
-  }
   if(!pseudo){
     pseudo=(prompt('Choisis ton pseudo pour le chat :')||'').trim().slice(0,20)||'Supporter';
     store.setItem('cfm-pseudo',pseudo);
   }
   input.value='';
-  addMsg(pseudo,t,true);
-  debugEl.textContent='🧪 envoyé ✓ · '+heure();
-  chatRef.push({n:pseudo,t:t,i:cid,time:firebase.database.ServerValue.TIMESTAMP}).catch(function(){
-    sysMsg('⚠️ Envoi échoué — vérifie Internet et la config');
-  });
+  addMsg(pseudo,t,true,Date.now());
+  debug();
+  if(client&&client.isConnected()){
+    try{
+      var msg=new Paho.MQTT.Message(JSON.stringify({n:pseudo,t:t,i:cid,tm:Date.now()}));
+      msg.destinationName=TOPIC;
+      client.send(msg);
+      debugEl.textContent='🧪 envoyé ✓ · '+heure();
+    }catch(e){
+      sysMsg('⚠️ Envoi échoué — touche 🔄 pour reconnecter');
+    }
+  }else{
+    sysMsg('⚠️ Pas connecté — connexion en cours, réessaie…');
+    connecter();
+  }
 };
+sysMsg('💬 Salon temps réel : '+TOPIC);
 </script>
 </body>
 </html>
