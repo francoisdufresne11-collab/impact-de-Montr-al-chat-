@@ -205,7 +205,7 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
   <footer>
     Heures affichées : heure de l'Est (Montréal) · Matchs RDS précédés d'une émission d'avant-match de 30 min<br>
     Sources : calendrier MLS 2026 &amp; RDS.ca · Page mise à jour le 6 septembre 2026<br>
-    💬 Chat hébergé par le propriétaire du site (Termux + cloudflared ou Render)
+    💬 Chat hébergé par le propriétaire (Termux + cloudflared ou Render) · v1.1 resynchronisation auto
   </footer>
 </div>
 
@@ -299,7 +299,7 @@ function tick(){
 tick();
 setInterval(tick,1000);
 
-/* ============ CHAT (serveur intégré — Termux/cloudflared ou Render) ============ */
+/* ============ CHAT (v1.1 — resynchronisation auto apres redemarrage serveur) ============ */
 var chatBtn=document.getElementById('chat-btn'),
     panel=document.getElementById('chat-panel'),
     closeBtn=document.getElementById('chat-close'),
@@ -358,6 +358,14 @@ function poll(){
   fetch('/api/messages?since='+since)
   .then(function(r){return r.json();})
   .then(function(d){
+    if(typeof d.total==='number' && d.total<since){
+      msgs.innerHTML='';
+      sysMsg('🔄 Le serveur a redémarré — salon resynchronisé');
+      since=0;
+      firstBatch=true;
+      poll();
+      return;
+    }
     setStatus('🟢 en ligne — '+d.total+' message(s) au total');
     var nouveaux=0,dernier=null;
     (d.msgs||[]).forEach(function(m){
