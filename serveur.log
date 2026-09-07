@@ -1,1 +1,4 @@
-[12:00:10] ⚽ CFM chat v4.0 — écoute sur le port 8902 (page OK)
+[12:18:15] ⚽ CFM chat v4.1 — écoute sur le port 8902 (page OK)
+/home/fd/Bureau/arena.ia/chat_serveur.py:131: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  c = mqtt_lib.Client(mqtt_lib.CallbackAPIVersion.VERSION1,
+[12:18:17] 🌐 pont MQTT connecté : broker.emqx.io:8084

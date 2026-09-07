@@ -1,1 +1,1 @@
-# Aucune dependance requise - serveur 100% Python standard
+paho-mqtt
