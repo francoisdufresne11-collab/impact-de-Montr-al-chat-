@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+VERSION = '1.2'
 import json, os, time, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -33,6 +34,7 @@ class H(BaseHTTPRequestHandler):
         self.send_header('Content-Type', ctype)
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Cache-Control', 'no-store')
         self.end_headers()
         self.wfile.write(body)
 
@@ -54,7 +56,7 @@ class H(BaseHTTPRequestHandler):
             with lock:
                 nouveaux = messages[since:]
                 total = len(messages)
-            self._repondre(200, json.dumps({'ok': True, 'total': total, 'msgs': nouveaux}, ensure_ascii=False))
+            self._repondre(200, json.dumps({'ok': True, 'ver': VERSION, 'total': total, 'msgs': nouveaux}, ensure_ascii=False))
         else:
             self._statique(u.path.lstrip('/'))
 
@@ -101,7 +103,6 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
-print('Serveur CFM demarre sur le port', PORT)
+print('Serveur CFM v' + VERSION + ' demarre sur le port', PORT)
 print('Test local : http://localhost:' + str(PORT))
-print('Astuce : gardez Termux eveille avec termux-wake-lock')
 ThreadingHTTPServer((HOST, PORT), H).serve_forever()

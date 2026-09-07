@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
 <title>Prochains matchs — CF Montréal 2026</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -56,7 +57,7 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
 .msg .quand{font-size:.6rem;opacity:.5;margin-top:2px}
 .msg.moi{align-self:flex-end;background:#1d4ed8}
 .msg.moi .who{color:#bfdbfe;text-align:right}
-.msg.sys{align-self:center;background:transparent;border:1px dashed #33456e;color:#64748b;font-size:.72rem}
+.msg.sys{align-self:center;background:transparent;border:1px dashed #33456e;color:#64748b;font-size:.72rem;max-width:95%;text-align:center}
 #chat-form{display:flex;gap:6px;padding:8px;border-top:1px solid #223158;background:#0f172a}
 #chat-in{flex:1;background:#060b16;border:1px solid #33456e;border-radius:10px;color:#fff;padding:9px 10px;font-size:.9rem;outline:none}
 #chat-in:focus{border-color:#3b82f6}
@@ -204,8 +205,8 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
 
   <footer>
     Heures affichées : heure de l'Est (Montréal) · Matchs RDS précédés d'une émission d'avant-match de 30 min<br>
-    Sources : calendrier MLS 2026 &amp; RDS.ca · Page mise à jour le 6 septembre 2026<br>
-    💬 Chat hébergé par le propriétaire (Termux + cloudflared ou Render) · v1.1 resynchronisation auto
+    Sources : calendrier MLS 2026 &amp; RDS.ca · Page v1.2<br>
+    💬 Chat hébergé par le propriétaire (Termux + cloudflared ou Render)
   </footer>
 </div>
 
@@ -299,7 +300,7 @@ function tick(){
 tick();
 setInterval(tick,1000);
 
-/* ============ CHAT (v1.1 — resynchronisation auto apres redemarrage serveur) ============ */
+/* ============ CHAT v1.2 ============ */
 var chatBtn=document.getElementById('chat-btn'),
     panel=document.getElementById('chat-panel'),
     closeBtn=document.getElementById('chat-close'),
@@ -354,6 +355,7 @@ function addMsg(who,text,moi,time){
   while(msgs.children.length>150)msgs.removeChild(msgs.firstChild);
   msgs.scrollTop=msgs.scrollHeight;
 }
+var verSrv='';
 function poll(){
   fetch('/api/messages?since='+since)
   .then(function(r){return r.json();})
@@ -366,7 +368,8 @@ function poll(){
       poll();
       return;
     }
-    setStatus('🟢 en ligne — '+d.total+' message(s) au total');
+    verSrv=d.ver||'?';
+    setStatus('🟢 en ligne · serveur v'+verSrv+' · '+d.total+' message(s) · salon : '+location.host);
     var nouveaux=0,dernier=null;
     (d.msgs||[]).forEach(function(m){
       if(m.i!==cid){
@@ -387,7 +390,7 @@ function poll(){
       }
     }
   })
-  .catch(function(){setStatus('🔴 serveur injoignable — réessai…');});
+  .catch(function(){setStatus('🔴 serveur injoignable — salon : '+(location.host||'fichier local')+' — réessai…');});
 }
 setInterval(poll,3000);
 poll();
@@ -424,12 +427,13 @@ form.onsubmit=function(ev){
   fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({n:pseudo,t:t,i:cid})})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok){setStatus('🟢 en ligne — message envoyé ✓');}
+      if(d.ok){setStatus('🟢 en ligne · serveur v'+verSrv+' — message envoyé ✓');}
       else{sysMsg('⚠️ Message refusé par le serveur');}
     })
-    .catch(function(){sysMsg('⚠️ Message NON envoyé — le serveur est-il démarré?');});
+    .catch(function(){sysMsg('⚠️ Message NON envoyé — serveur injoignable');});
 };
-sysMsg('💬 Salon des partisans du CF Montréal.');
+sysMsg('💬 Salon : '+(location.host||'fichier local ⚠️'));
+if(!location.host){sysMsg('⚠️ Le chat ne fonctionne QUE via le lien web (Render ou cloudflared), pas en ouvrant le fichier directement.');}
 </script>
 </body>
 </html>
