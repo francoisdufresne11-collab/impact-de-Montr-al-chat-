@@ -7,7 +7,7 @@
 <title>Prochains matchs — CF Montréal 2026</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:#0b1220;color:#e8edf6;min-height:100vh;padding-bottom:130px}
+body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:#0b1220;color:#e8edf6;min-height:100vh;padding-bottom:110px}
 header{background:linear-gradient(135deg,#0047ab 0%,#00205b 65%,#000 100%);padding:30px 16px;text-align:center;border-bottom:3px solid #3b82f6}
 header .logo{font-size:2.2rem}
 header h1{font-size:1.45rem;margin-top:4px}
@@ -43,8 +43,6 @@ header p{opacity:.75;margin-top:6px;font-size:.85rem}
 @keyframes blink{50%{opacity:.35}}
 .cd{font-variant-numeric:tabular-nums;background:#060b16;border:1px dashed #33456e;border-radius:10px;padding:7px 12px;font-size:.92rem;color:#a5b4fc;margin-top:8px;display:inline-block;font-weight:700}
 footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height:1.6}
-#salon-live{position:fixed;left:8px;bottom:8px;max-width:65vw;background:#052e16;color:#86efac;border:1px solid #16a34a;border-radius:10px;padding:6px 10px;font-size:.62rem;font-family:monospace;z-index:900;word-break:break-all;line-height:1.5}
-#salon-live.err{background:#450a0a;color:#fca5a5;border-color:#dc2626}
 #chat-btn{position:fixed;right:16px;bottom:16px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#0047ab);border:2px solid #60a5fa;color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.55);z-index:1000}
 #chat-btn .dot{position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:20px;min-width:24px;height:24px;font-size:.72rem;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0b1220}
 #chat-panel{position:fixed;right:16px;bottom:88px;width:330px;max-width:94vw;height:460px;max-height:72vh;background:#0f172a;border:2px solid #3b82f6;border-radius:16px;display:none;flex-direction:column;overflow:hidden;z-index:1001;box-shadow:0 14px 44px rgba(0,0,0,.65)}
@@ -57,7 +55,7 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
 #chat-actions button{width:28px;height:28px;border-radius:50%;font-weight:800;cursor:pointer;font-size:.85rem;border:0;color:#fff}
 #chat-notif{background:#7c3aed}
 #chat-notif.on{background:#16a34a;box-shadow:0 0 8px #16a34a}
-#chat-resync{background:#0ea5e9}
+#chat-cfg{background:#f59e0b}
 #chat-close{background:#dc2626}
 #chat-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;background:#0b1220}
 .msg{max-width:85%;padding:8px 10px;border-radius:12px;background:#1e293b;font-size:.86rem;overflow-wrap:break-word}
@@ -213,24 +211,22 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
 
   <footer>
     Heures affichées : heure de l'Est (Montréal) · Matchs RDS précédés d'une émission d'avant-match de 30 min<br>
-    Sources : calendrier MLS 2026 &amp; RDS.ca · Page v1.5<br>
-    💬 Chat hébergé par le propriétaire (Render ou Termux + cloudflared)
+    Sources : calendrier MLS 2026 &amp; RDS.ca · Page v2.0<br>
+    💬 Chat en direct via Firebase (Google) — fonctionne depuis le fichier OU un lien web
   </footer>
 </div>
-
-<div id="salon-live">📡 connexion…</div>
 
 <button id="chat-btn" title="Chat des partisans">💬<span class="dot" id="chat-dot">0</span></button>
 <div id="chat-panel">
   <div id="chat-head">
     <div>
       <strong>💬 Chat des partisans</strong>
-      <div id="chat-status">connexion…</div>
-      <div id="chat-debug">🧪 diagnostic…</div>
+      <div id="chat-status">démarrage…</div>
+      <div id="chat-debug">🧪 …</div>
     </div>
     <div id="chat-actions">
       <button id="chat-notif" title="Notifications">🔕</button>
-      <button id="chat-resync" title="Resynchroniser">🔄</button>
+      <button id="chat-cfg" title="Configurer Firebase">⚙️</button>
       <button id="chat-close" title="Fermer">✕</button>
     </div>
   </div>
@@ -241,10 +237,14 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
   </form>
 </div>
 
+<!-- SDK Firebase (nécessite Internet) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <script>
 function pad(n){return String(n).padStart(2,'0');}
 
-/* ============ CALENDRIER + COMPTES A REBOURS ============ */
+/* ============ CALENDRIER + COMPTES A REBOURS (marche hors ligne) ============ */
 var cards=[].slice.call(document.querySelectorAll('.match')).map(function(el){
   return {
     el:el,
@@ -315,19 +315,26 @@ function tick(){
 tick();
 setInterval(tick,1000);
 
-/* ============ CHAT v1.5 ============ */
+/* ============ CHAT v2.0 — FIREBASE (aucun serveur, marche depuis le fichier) ============ */
+
+/* 👉 COLLE TA CONFIG FIREBASE ICI (remplace null par ton bloc entre accolades { ... })
+   Obtenue sur console.firebase.google.com → Paramètres du projet → Tes applications → </> Web
+   Si tu laisses null, le chat te la DEMANDERA à la première ouverture et la mémorisera. */
+var FIREBASE_CONFIG = null;
+
+var chatRef=null, chatPret=false, demarrage=Date.now();
+
 var chatBtn=document.getElementById('chat-btn'),
     panel=document.getElementById('chat-panel'),
     closeBtn=document.getElementById('chat-close'),
-    resyncBtn=document.getElementById('chat-resync'),
     notifBtn=document.getElementById('chat-notif'),
+    cfgBtn=document.getElementById('chat-cfg'),
     dot=document.getElementById('chat-dot'),
     msgs=document.getElementById('chat-msgs'),
     form=document.getElementById('chat-form'),
     input=document.getElementById('chat-in'),
     statusEl=document.getElementById('chat-status'),
-    debugEl=document.getElementById('chat-debug'),
-    salonLive=document.getElementById('salon-live');
+    debugEl=document.getElementById('chat-debug');
 
 var store=(function(){
   try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return localStorage;}
@@ -336,19 +343,10 @@ var store=(function(){
 var cid=store.getItem('cfm-cid');
 if(!cid){cid=Math.random().toString(36).slice(2)+Date.now().toString(36);store.setItem('cfm-cid',cid);}
 var pseudo=store.getItem('cfm-pseudo')||'';
-var since=0, unread=0, open=false, firstBatch=true;
-var errCount=0, lastTotal=0, verSrv='?';
+var unread=0, open=false;
 
 function setStatus(t){statusEl.textContent=t;}
 function heure(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());}
-function salonLigne(extra){
-  salonLive.classList.remove('err');
-  salonLive.textContent='📡 '+(location.host||'FICHIER LOCAL')+' · serveur v'+verSrv+' · '+lastTotal+' msg · '+heure()+(extra||'');
-}
-function debug(){
-  var aff=msgs.querySelectorAll('.msg:not(.sys)').length;
-  debugEl.textContent='🧪 affichés:'+aff+' · serveur:'+lastTotal+' · erreurs:'+errCount+' · '+heure();
-}
 function beep(){
   try{
     var C=window.AudioContext||window.webkitAudioContext;
@@ -365,12 +363,11 @@ function beep(){
     o.stop(c.currentTime+.32);
   }catch(e){}
 }
-
 function majCloche(){
   if(!('Notification' in window)){notifBtn.style.display='none';return;}
-  if(Notification.permission==='granted'){notifBtn.textContent='🔔';notifBtn.classList.add('on');notifBtn.title='Notifications activées';}
-  else if(Notification.permission==='denied'){notifBtn.textContent='🚫';notifBtn.classList.remove('on');notifBtn.title='Notifications bloquées dans les paramètres';}
-  else{notifBtn.textContent='🔕';notifBtn.classList.remove('on');notifBtn.title='Touche pour activer les notifications';}
+  if(Notification.permission==='granted'){notifBtn.textContent='🔔';notifBtn.classList.add('on');}
+  else if(Notification.permission==='denied'){notifBtn.textContent='🚫';notifBtn.classList.remove('on');}
+  else{notifBtn.textContent='🔕';notifBtn.classList.remove('on');}
 }
 function activerNotifs(){
   if(!('Notification' in window)){sysMsg('⚠️ Ton navigateur ne supporte pas les notifications');return;}
@@ -378,18 +375,14 @@ function activerNotifs(){
   if(Notification.permission==='denied'){sysMsg('⚠️ Bloquées : Chrome ⋮ → Paramètres du site → Notifications → Autoriser.');return;}
   Notification.requestPermission().then(function(p){
     majCloche();
-    if(p==='granted'){
-      sysMsg('🔔 Notifications activées!');
-      notify('🔔 Notifications activées','Bienvenue dans le chat des partisans!');
-    }
+    if(p==='granted'){sysMsg('🔔 Notifications activées!');notify('🔔 Notifications activées','Tu seras avisé de chaque message!');}
   });
 }
 function notify(titre,corps){
-  if(!('Notification' in window))return;
-  if(Notification.permission!=='granted')return;
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
   try{
-    var n=new Notification(titre,{body:corps,tag:'cfm-chat',renotify:true,vibrate:[200,100,200],silent:false});
-    n.onclick=function(){window.focus();if(window.ouvrirChat)window.ouvrirChat();n.close();};
+    var n=new Notification(titre,{body:corps,tag:'cfm-chat',renotify:true,vibrate:[200,100,200]});
+    n.onclick=function(){window.focus();ouvrir();n.close();};
   }catch(e){}
 }
 notifBtn.onclick=activerNotifs;
@@ -413,55 +406,67 @@ function addMsg(who,text,moi,time){
   while(msgs.children.length>150)msgs.removeChild(msgs.firstChild);
   msgs.scrollTop=msgs.scrollHeight;
 }
-function resync(silencieux){
-  msgs.innerHTML='';
-  since=0;
-  firstBatch=true;
-  if(!silencieux){sysMsg('🔄 Resynchronisation du salon…');}
-  poll();
+
+function demanderConfig(){
+  var txt=prompt('Colle ici ta config Firebase — le bloc { apiKey: ..., databaseURL: ... } :\n(de console.firebase.google.com → Paramètres projet → </> Web)');
+  if(!txt)return null;
+  try{
+    var cfg=(new Function('return ('+txt+')'))();
+    if(cfg && cfg.databaseURL){store.setItem('cfm-fb',JSON.stringify(cfg));return cfg;}
+  }catch(e){}
+  sysMsg('⚠️ Config invalide — copie le bloc complet AVEC les accolades { }');
+  return null;
 }
-function poll(){
-  fetch('/api/messages?since='+since)
-  .then(function(r){return r.json();})
-  .then(function(d){
-    if(typeof d.total==='number' && d.total<since){
-      resync();
-      return;
-    }
-    verSrv=d.ver||'?';
-    lastTotal=(typeof d.total==='number')?d.total:lastTotal;
-    setStatus('🟢 en ligne · serveur v'+verSrv+' · salon : '+(location.host||'fichier local'));
-    salonLigne();
-    var nouveaux=0,dernier=null;
-    (d.msgs||[]).forEach(function(m){
-      if(m.i!==cid){
-        addMsg(m.n||'Supporter',m.t||'',false,m.sv?m.sv*1000:Date.now());
-        if(!firstBatch){nouveaux++;dernier=m;}
+cfgBtn.onclick=function(){var c=demanderConfig();if(c){FIREBASE_CONFIG=c;bootFirebase();}};
+
+function bootFirebase(){
+  var cfg=FIREBASE_CONFIG;
+  if(!cfg){try{cfg=JSON.parse(store.getItem('cfm-fb')||'null');}catch(e){}}
+  if(!cfg){
+    setStatus('⚙️ Config Firebase manquante — touche le bouton orange');
+    debugEl.textContent='🧪 1. console.firebase.google.com → projet → Realtime Database → copier config';
+    return;
+  }
+  FIREBASE_CONFIG=cfg;
+  if(typeof firebase==='undefined'){
+    setStatus('🔴 SDK Firebase pas chargé — Internet requis, recharge la page');
+    return;
+  }
+  try{firebase.initializeApp(cfg);}catch(e){}
+  try{
+    var dba=firebase.database();
+    dba.ref('.info/connected').on('value',function(s){
+      if(s.val()){
+        setStatus('🟢 en ligne · Firebase · salon partagé avec tous les détenteurs du fichier');
+      }else{
+        setStatus('🔴 connexion au salon…');
       }
     });
-    since+=(d.msgs||[]).length;
-    firstBatch=false;
-    debug();
-    if(nouveaux>0){
-      unread+=nouveaux;
-      dot.style.display='flex';
-      dot.textContent=unread>99?'99+':unread;
-      beep();
-      document.title='('+unread+') CF Montréal — Matchs';
-      if(dernier){notify('💬 '+(dernier.n||'Supporter'),dernier.t||'');}
-      if(navigator.vibrate){try{navigator.vibrate([200,100,200]);}catch(e){}}
-    }
-  })
-  .catch(function(){
-    errCount++;
-    setStatus('🔴 injoignable · salon : '+(location.host||'fichier local'));
-    salonLive.classList.add('err');
-    salonLive.textContent='📡 '+(location.host||'FICHIER LOCAL')+' · HORS LIGNE (x'+errCount+') · '+heure();
-    debug();
-  });
+    chatRef=dba.ref('cfm_salon');
+    chatRef.limitToLast(100).on('child_added',function(snap){
+      var m=snap.val();
+      if(!m||!m.t)return;
+      if(m.i===cid)return;
+      addMsg(m.n||'Supporter',m.t,false,m.time);
+      if(chatPret){
+        unread++;
+        dot.style.display='flex';
+        dot.textContent=unread>99?'99+':unread;
+        beep();
+        if(navigator.vibrate){try{navigator.vibrate([200,100,200]);}catch(e){}}
+        document.title='('+unread+') CF Montréal — Matchs';
+        notify('💬 '+(m.n||'Supporter'),m.t);
+      }
+      debugEl.textContent='🧪 reçu en direct · '+heure();
+    });
+    chatPret=false;
+    setTimeout(function(){chatPret=true;},4000);
+    sysMsg('✅ Chat connecté! Tous ceux qui ont ce fichier sont dans le même salon.');
+  }catch(e){
+    setStatus('🔴 Erreur Firebase : '+e.message);
+  }
 }
-setInterval(poll,3000);
-poll();
+bootFirebase();
 
 function ouvrir(){
   open=true;
@@ -476,44 +481,30 @@ function ouvrir(){
   majCloche();
   input.focus();
 }
-window.ouvrirChat=ouvrir;
 function fermer(){open=false;panel.classList.remove('open');}
 chatBtn.onclick=function(){ if(open){fermer();}else{ouvrir();} };
 closeBtn.onclick=fermer;
-resyncBtn.onclick=function(){ resync(); };
 
 form.onsubmit=function(ev){
   ev.preventDefault();
   var t=input.value.trim();
   if(!t)return;
+  if(!chatRef){
+    var c=demanderConfig();
+    if(c){FIREBASE_CONFIG=c;bootFirebase();}
+    if(!chatRef){sysMsg('⚙️ Configure Firebase d\'abord (bouton orange)');return;}
+  }
   if(!pseudo){
     pseudo=(prompt('Choisis ton pseudo pour le chat :')||'').trim().slice(0,20)||'Supporter';
     store.setItem('cfm-pseudo',pseudo);
   }
   input.value='';
   addMsg(pseudo,t,true);
-  debug();
-  fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({n:pseudo,t:t,i:cid})})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.ok){
-        lastTotal=d.total;
-        salonLigne(' · ✓ envoyé');
-        setStatus('🟢 envoyé ✓ · serveur a '+d.total+' message(s)');
-      } else {
-        sysMsg('⚠️ Message refusé par le serveur');
-      }
-    })
-    .catch(function(){
-      errCount++;
-      sysMsg('⚠️ Message NON envoyé — serveur injoignable');
-      debug();
-    });
+  debugEl.textContent='🧪 envoyé ✓ · '+heure();
+  chatRef.push({n:pseudo,t:t,i:cid,time:firebase.database.ServerValue.TIMESTAMP}).catch(function(){
+    sysMsg('⚠️ Envoi échoué — vérifie Internet et la config');
+  });
 };
-sysMsg('💬 Salon : '+(location.host||'FICHIER LOCAL'));
-if(!location.host){
-  sysMsg('⚠️ Le chat ne fonctionne PAS en ouvrant le fichier. Utilise le LIEN WEB!');
-}
 </script>
 </body>
 </html>
