@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-VERSION = '1.2'
-import json, os, time, threading
+VERSION = '1.3'
+import json, os, time, socket, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -54,9 +54,11 @@ class H(BaseHTTPRequestHandler):
             except Exception:
                 since = 0
             with lock:
-                nouveaux = messages[since:]
+                nouveaux = messages[since:] if 0 <= since <= len(messages) else []
                 total = len(messages)
             self._repondre(200, json.dumps({'ok': True, 'ver': VERSION, 'total': total, 'msgs': nouveaux}, ensure_ascii=False))
+        elif u.path == '/api/ping':
+            self._repondre(200, json.dumps({'ok': True, 'ver': VERSION, 'time': time.time(), 'host': socket.gethostname()}, ensure_ascii=False))
         else:
             self._statique(u.path.lstrip('/'))
 
@@ -93,8 +95,8 @@ class H(BaseHTTPRequestHandler):
                     if len(messages) > 500:
                         del messages[:-500]
                     save(messages)
-                print('MSG ' + entree['n'] + ' : ' + entree['t'])
-                self._repondre(200, json.dumps({'ok': True}))
+                print('>>> MSG RECU : ' + entree['n'] + ' : ' + entree['t'])
+                self._repondre(200, json.dumps({'ok': True, 'total': len(messages)}))
             except Exception as e:
                 self._repondre(400, json.dumps({'ok': False, 'err': str(e)}))
         else:
@@ -103,6 +105,6 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
-print('Serveur CFM v' + VERSION + ' demarre sur le port', PORT)
-print('Test local : http://localhost:' + str(PORT))
+print('=== Serveur CFM v' + VERSION + ' sur le port', PORT, '===')
+print('Test local : http://localhost:' + str(PORT) + '/api/ping')
 ThreadingHTTPServer((HOST, PORT), H).serve_forever()
