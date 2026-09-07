@@ -241,7 +241,7 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
   </form>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/mqttws31.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
 
 <script>
 function pad(n){return String(n).padStart(2,'0');}
@@ -318,7 +318,7 @@ tick();
 setInterval(tick,1000);
 
 /* ============ CHAT v3.0 — MQTT PUBLIC (aucun serveur, aucun compte) ============ */
-var TOPIC='cfm-partisans/x7k2q9/salon';  /* 👈 le salon — change-le pour un salon privé */
+var TOPIC='cfm-partisans/x7k2q9/salon';
 
 var chatBtn=document.getElementById('chat-btn'),
     panel=document.getElementById('chat-panel'),
@@ -337,8 +337,7 @@ var store=(function(){
   try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return localStorage;}
   catch(e){var m={};return{getItem:function(k){return m[k]||null;},setItem:function(k,v){m[k]=v;}};}
 })();
-var cid=store.getItem('cfm-cid');
-if(!cid){cid=Math.random().toString(36).slice(2)+Date.now().toString(36);store.setItem('cfm-cid',cid);}
+var cid='cfm_'+Math.random().toString(36).substr(2,8)+Date.now().toString(36).substr(-4);
 var pseudo=store.getItem('cfm-pseudo')||'';
 var unread=0, open=false, errCount=0, recvCount=0, connecte=false;
 
@@ -418,7 +417,7 @@ function connecter(){
   }
   if(client&&client.isConnected())return;
   setStatus('🟡 connexion au salon…');
-  client=new Paho.MQTT.Client('broker.emqx.io',8084,'/mqtt','cfm-'+cid);
+  client=new Paho.MQTT.Client('broker.emqx.io',8084,'/mqtt',cid);
   client.onConnectionLost=function(){
     connecte=false;errCount++;
     setStatus('🔴 connexion perdue — reconnexion…');
