@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Prochains matchs — CF Montréal 2026</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:#0b1220;color:#e8edf6;min-height:100vh;padding-bottom:110px}
+header{background:linear-gradient(135deg,#0047ab 0%,#00205b 65%,#000 100%);padding:30px 16px;text-align:center;border-bottom:3px solid #3b82f6}
+header .logo{font-size:2.2rem}
+header h1{font-size:1.45rem;margin-top:4px}
+header p{opacity:.75;margin-top:6px;font-size:.85rem}
+.wrap{max-width:840px;margin:auto;padding:18px 14px}
+.titre-section{font-size:1.05rem;font-weight:800;letter-spacing:.5px;margin:8px 2px 14px;text-transform:uppercase;color:#93c5fd}
+.hero{background:linear-gradient(135deg,#0f2a63,#0b1c44);border:2px solid #3b82f6;border-radius:20px;padding:24px 18px;text-align:center;box-shadow:0 10px 34px rgba(0,71,171,.4);margin-bottom:28px}
+.hero .tag{display:inline-block;background:#3b82f6;color:#fff;font-size:.7rem;font-weight:800;letter-spacing:1px;padding:4px 12px;border-radius:20px;text-transform:uppercase;margin-bottom:12px}
+.hero .vs{font-size:1.35rem;font-weight:800;line-height:1.3}
+.hero .date{margin-top:8px;font-size:1rem;color:#bfdbfe}
+.hero .lieu{margin-top:4px;font-size:.85rem;opacity:.7}
+.badge{display:inline-block;font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:20px;margin:10px 3px 0}
+.badge.rds{background:#e11d48;color:#fff}
+.badge.apple{background:#1f2937;color:#fff;border:1px solid #4b5563}
+.badge.tbd{background:#78350f;color:#fde68a}
+.chrono{display:flex;justify-content:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+.chrono .unite{background:#060b16;border:1px solid #33456e;border-radius:12px;padding:10px 6px;min-width:70px}
+.chrono .unite .val{font-size:1.7rem;font-weight:800;font-variant-numeric:tabular-nums;color:#60a5fa}
+.chrono .unite .lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-top:2px}
+.hero-msg{font-size:1.1rem;margin-top:16px;color:#93c5fd}
+.match{display:flex;gap:14px;align-items:center;background:#111a2e;border:1px solid #223158;border-radius:16px;padding:14px;margin-bottom:12px}
+.match.done{opacity:.42}
+.datebloc{background:#0047ab;border-radius:12px;padding:10px 6px;text-align:center;min-width:70px;flex-shrink:0}
+.datebloc .j{font-size:1.35rem;font-weight:800}
+.datebloc .m{font-size:.68rem;text-transform:uppercase;opacity:.85}
+.datebloc .h{font-size:.7rem;margin-top:3px;color:#bfdbfe;font-weight:700}
+.info{flex:1;min-width:0}
+.info .vs{font-weight:700;font-size:1rem}
+.info .lieu{font-size:.78rem;opacity:.6;margin-top:2px}
+.pill{display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.8px;padding:3px 9px;border-radius:20px;margin-top:6px;background:#1e3a8a;color:#93c5fd;text-transform:uppercase}
+.pill.live{background:#dc2626;color:#fff;animation:blink 1s infinite}
+.pill.done{background:#374151;color:#9ca3af}
+@keyframes blink{50%{opacity:.35}}
+.cd{font-variant-numeric:tabular-nums;background:#060b16;border:1px dashed #33456e;border-radius:10px;padding:7px 12px;font-size:.92rem;color:#a5b4fc;margin-top:8px;display:inline-block;font-weight:700}
+footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height:1.6}
+#salon-live{position:fixed;left:8px;bottom:8px;max-width:62vw;background:#052e16;color:#86efac;border:1px solid #16a34a;border-radius:10px;padding:6px 10px;font-size:.62rem;font-family:monospace;z-index:900;word-break:break-all;line-height:1.5}
+#salon-live.err{background:#450a0a;color:#fca5a5;border-color:#dc2626}
+#chat-btn{position:fixed;right:16px;bottom:16px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#0047ab);border:2px solid #60a5fa;color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.55);z-index:1000}
+#chat-btn .dot{position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:20px;min-width:24px;height:24px;font-size:.72rem;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0b1220}
+#chat-panel{position:fixed;right:16px;bottom:88px;width:330px;max-width:94vw;height:460px;max-height:72vh;background:#0f172a;border:2px solid #3b82f6;border-radius:16px;display:none;flex-direction:column;overflow:hidden;z-index:1001;box-shadow:0 14px 44px rgba(0,0,0,.65)}
+#chat-panel.open{display:flex}
+#chat-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:linear-gradient(135deg,#0047ab,#00205b);border-bottom:1px solid #223158}
+#chat-head strong{font-size:.92rem}
+#chat-status{font-size:.65rem;opacity:.85;margin-top:1px}
+#chat-debug{font-size:.6rem;color:#fbbf24;margin-top:2px;font-family:monospace}
+#chat-actions{display:flex;gap:6px;align-items:center}
+#chat-actions button{width:28px;height:28px;border-radius:50%;font-weight:800;cursor:pointer;font-size:.85rem;border:0;color:#fff}
+#chat-notif{background:#7c3aed}
+#chat-notif.on{background:#16a34a;box-shadow:0 0 8px #16a34a}
+#chat-reco{background:#0ea5e9}
+#chat-close{background:#dc2626}
+#chat-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;background:#0b1220}
+.msg{max-width:85%;padding:8px 10px;border-radius:12px;background:#1e293b;font-size:.86rem;overflow-wrap:break-word}
+.msg .who{font-size:.66rem;font-weight:800;color:#60a5fa;margin-bottom:2px}
+.msg .quand{font-size:.6rem;opacity:.5;margin-top:2px}
+.msg.moi{align-self:flex-end;background:#1d4ed8}
+.msg.moi .who{color:#bfdbfe;text-align:right}
+.msg.sys{align-self:center;background:transparent;border:1px dashed #33456e;color:#64748b;font-size:.72rem;max-width:95%;text-align:center}
+#chat-form{display:flex;gap:6px;padding:8px;border-top:1px solid #223158;background:#0f172a}
+#chat-in{flex:1;background:#060b16;border:1px solid #33456e;border-radius:10px;color:#fff;padding:9px 10px;font-size:.9rem;outline:none}
+#chat-in:focus{border-color:#3b82f6}
+#chat-send{background:#2563eb;border:0;color:#fff;border-radius:10px;padding:0 16px;font-weight:800;cursor:pointer;font-size:1rem}
+#chat-send:active{background:#1d4ed8}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚽</div>
+  <h1>CF MONTRÉAL — Saison 2026</h1>
+  <p>Calendrier des prochains matchs · compte à rebours · chat des partisans</p>
+</header>
+
+<div class="wrap">
+
+  <div class="titre-section">🔥 Prochain match</div>
+  <div class="hero" id="hero">
+    <span class="tag">Prochain match</span>
+    <div class="vs" id="hero-vs">Chargement…</div>
+    <div class="date" id="hero-date"></div>
+    <div class="lieu" id="hero-lieu"></div>
+    <div id="hero-tv"></div>
+    <div class="chrono" id="hero-chrono" style="display:none">
+      <div class="unite"><div class="val" id="c-j">0</div><div class="lbl">Jours</div></div>
+      <div class="unite"><div class="val" id="c-h">00</div><div class="lbl">Heures</div></div>
+      <div class="unite"><div class="val" id="c-m">00</div><div class="lbl">Min</div></div>
+      <div class="unite"><div class="val" id="c-s">00</div><div class="lbl">Sec</div></div>
+    </div>
+    <div class="hero-msg" id="hero-msg"></div>
+  </div>
+
+  <div class="titre-section">📅 Tous les prochains matchs</div>
+
+  <div class="match" data-ts="2026-09-09T19:30:00-04:00" data-dom="1" data-opp="Charlotte FC" data-date="Mercredi 9 septembre 2026 — 19 h 30" data-lieu="Stade Saputo, Montréal" data-tv="Apple TV">
+    <div class="datebloc"><div class="j">09</div><div class="m">Sept</div><div class="h">19 h 30</div></div>
+    <div class="info">
+      <div class="vs">🏠 CF Montréal 🆚 Charlotte FC</div>
+      <div class="lieu">Stade Saputo, Montréal</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge apple">📺 Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-09-12T21:30:00-04:00" data-dom="0" data-opp="Colorado Rapids" data-date="Samedi 12 septembre 2026 — 21 h 30" data-lieu="Dick's Sporting Goods Park, Colorado" data-tv="Apple TV">
+    <div class="datebloc"><div class="j">12</div><div class="m">Sept</div><div class="h">21 h 30</div></div>
+    <div class="info">
+      <div class="vs">✈️ Colorado Rapids 🆚 CF Montréal</div>
+      <div class="lieu">Dick's Sporting Goods Park, Colorado</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge apple">📺 Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-09-19T19:30:00-04:00" data-dom="1" data-opp="Columbus Crew" data-date="Samedi 19 septembre 2026 — 19 h 30" data-lieu="Stade Saputo, Montréal" data-tv="RDS|Apple TV">
+    <div class="datebloc"><div class="j">19</div><div class="m">Sept</div><div class="h">19 h 30</div></div>
+    <div class="info">
+      <div class="vs">🏠 CF Montréal 🆚 Columbus Crew</div>
+      <div class="lieu">Stade Saputo, Montréal</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge rds">📺 RDS</span> <span class="badge apple">Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-09-26T19:30:00-04:00" data-dom="1" data-opp="FC Cincinnati" data-date="Samedi 26 septembre 2026 — 19 h 30" data-lieu="Stade Saputo, Montréal" data-tv="RDS|Apple TV">
+    <div class="datebloc"><div class="j">26</div><div class="m">Sept</div><div class="h">19 h 30</div></div>
+    <div class="info">
+      <div class="vs">🏠 CF Montréal 🆚 FC Cincinnati</div>
+      <div class="lieu">Stade Saputo, Montréal</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge rds">📺 RDS</span> <span class="badge apple">Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-10-10T13:00:00-04:00" data-dom="0" data-opp="Toronto FC" data-date="Samedi 10 octobre 2026 — 13 h 00" data-lieu="BMO Field, Toronto" data-tv="Apple TV">
+    <div class="datebloc"><div class="j">10</div><div class="m">Oct</div><div class="h">13 h 00</div></div>
+    <div class="info">
+      <div class="vs">✈️ Toronto FC 🆚 CF Montréal</div>
+      <div class="lieu">BMO Field, Toronto</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge apple">📺 Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-10-14T19:30:00-04:00" data-dom="1" data-opp="Atlanta United" data-date="Mercredi 14 octobre 2026 — 19 h 30" data-lieu="Stade Saputo, Montréal" data-tv="Apple TV">
+    <div class="datebloc"><div class="j">14</div><div class="m">Oct</div><div class="h">19 h 30</div></div>
+    <div class="info">
+      <div class="vs">🏠 CF Montréal 🆚 Atlanta United</div>
+      <div class="lieu">Stade Saputo, Montréal</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge apple">📺 Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-10-17T22:30:00-04:00" data-dom="0" data-opp="Seattle Sounders" data-date="Samedi 17 octobre 2026 — 22 h 30" data-lieu="Lumen Field, Seattle" data-tv="RDS|Apple TV">
+    <div class="datebloc"><div class="j">17</div><div class="m">Oct</div><div class="h">22 h 30</div></div>
+    <div class="info">
+      <div class="vs">✈️ Seattle Sounders 🆚 CF Montréal</div>
+      <div class="lieu">Lumen Field, Seattle</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge rds">📺 RDS</span> <span class="badge apple">Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-10-24T13:30:00-04:00" data-dom="1" data-opp="Nashville SC" data-date="Samedi 24 octobre 2026 — 13 h 30" data-lieu="Stade Saputo, Montréal" data-tv="RDS|Apple TV">
+    <div class="datebloc"><div class="j">24</div><div class="m">Oct</div><div class="h">13 h 30</div></div>
+    <div class="info">
+      <div class="vs">🏠 CF Montréal 🆚 Nashville SC</div>
+      <div class="lieu">Stade Saputo, Montréal</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge rds">📺 RDS</span> <span class="badge apple">Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-10-28T19:30:00-04:00" data-dom="0" data-opp="Charlotte FC" data-date="Mercredi 28 octobre 2026 — 19 h 30" data-lieu="Bank of America Stadium, Charlotte" data-tv="Apple TV">
+    <div class="datebloc"><div class="j">28</div><div class="m">Oct</div><div class="h">19 h 30</div></div>
+    <div class="info">
+      <div class="vs">✈️ Charlotte FC 🆚 CF Montréal</div>
+      <div class="lieu">Bank of America Stadium, Charlotte</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge apple">📺 Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="2026-10-31T14:00:00-04:00" data-dom="0" data-opp="New York City FC" data-date="Samedi 31 octobre 2026 — 14 h 00" data-lieu="Citi Field, New York" data-tv="Apple TV">
+    <div class="datebloc"><div class="j">31</div><div class="m">Oct</div><div class="h">14 h 00</div></div>
+    <div class="info">
+      <div class="vs">✈️ New York City FC 🆚 CF Montréal</div>
+      <div class="lieu">Citi Field, New York</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge apple">📺 Apple TV</span><br>
+      <span class="cd">⏳ …</span>
+    </div>
+  </div>
+
+  <div class="match" data-ts="" data-dom="1" data-opp="Vancouver Whitecaps" data-date="Novembre 2026 — date à confirmer (Decision Day)" data-lieu="Stade Saputo, Montréal" data-tv="Apple TV">
+    <div class="datebloc"><div class="j">—</div><div class="m">Nov</div><div class="h">À conf.</div></div>
+    <div class="info">
+      <div class="vs">🏠 CF Montréal 🆚 Vancouver Whitecaps</div>
+      <div class="lieu">Stade Saputo, Montréal — Decision Day (dernier match de saison)</div><br>
+      <span class="pill">À venir</span>
+      <span class="badge tbd">⏰ Date à confirmer</span> <span class="badge apple">📺 Apple TV</span><br>
+      <span class="cd">⏳ Compte à rebours disponible une fois la date confirmée</span>
+    </div>
+  </div>
+
+  <footer>
+    Heures affichées : heure de l'Est (Montréal) · Matchs RDS précédés d'un avant-match de 30 min<br>
+    Sources : calendrier MLS 2026 (ESPN) &amp; RDS.ca · Page v4.0 — dates vérifiées le 6 sept. 2026<br>
+    💬 Chat temps réel 100% autonome — aucune librairie externe, aucun serveur, aucun compte
+  </footer>
+</div>
+
+<div id="salon-live">📡 connexion…</div>
+
+<button id="chat-btn" title="Chat des partisans">💬<span class="dot" id="chat-dot">0</span></button>
+<div id="chat-panel">
+  <div id="chat-head">
+    <div>
+      <strong>💬 Chat des partisans</strong>
+      <div id="chat-status">connexion…</div>
+      <div id="chat-debug">🧪 …</div>
+    </div>
+    <div id="chat-actions">
+      <button id="chat-notif" title="Notifications">🔕</button>
+      <button id="chat-reco" title="Reconnecter">🔄</button>
+      <button id="chat-close" title="Fermer">✕</button>
+    </div>
+  </div>
+  <div id="chat-msgs"></div>
+  <form id="chat-form">
+    <input id="chat-in" maxlength="300" placeholder="Écris ton message…" autocomplete="off">
+    <button id="chat-send" type="submit">➤</button>
+  </form>
+</div>
+
+<script>
+function pad(n){return String(n).padStart(2,'0');}
+
+/* ============ CALENDRIER + COMPTES A REBOURS (hors ligne) ============ */
+var cards=[].slice.call(document.querySelectorAll('.match')).map(function(el){
+  return {
+    el:el,
+    ts:el.dataset.ts?new Date(el.dataset.ts).getTime():null,
+    cd:el.querySelector('.cd'),
+    pill:el.querySelector('.pill'),
+    dom:el.dataset.dom==='1',
+    opp:el.dataset.opp,
+    date:el.dataset.date,
+    lieu:el.dataset.lieu,
+    tv:(el.dataset.tv||'').split('|')
+  };
+});
+function tvBadges(l){
+  return l.map(function(c){
+    if(c==='RDS') return '<span class="badge rds">📺 RDS</span>';
+    return '<span class="badge apple">📺 '+c+'</span>';
+  }).join(' ');
+}
+function rest(ts){
+  var s=Math.max(0,Math.floor((ts-Date.now())/1000));
+  return {j:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};
+}
+function tick(){
+  var now=Date.now(), next=null;
+  cards.forEach(function(m){
+    if(!m.ts) return;
+    if(now<m.ts){
+      var r=rest(m.ts);
+      m.cd.textContent='⏳ '+r.j+' j '+pad(r.h)+' h '+pad(r.m)+' min '+pad(r.s)+' s';
+      if(!next) next=m;
+    } else if(now<m.ts+3*3600*1000){
+      m.cd.textContent='🔴 EN DIRECT MAINTENANT';
+      m.pill.className='pill live'; m.pill.textContent='En direct';
+    } else {
+      m.cd.textContent='✅ Match terminé';
+      m.pill.className='pill done'; m.pill.textContent='Terminé';
+      m.el.classList.add('done');
+    }
+  });
+  if(next){
+    document.getElementById('hero-vs').textContent = next.dom ? ('CF Montréal 🆚 '+next.opp) : (next.opp+' 🆚 CF Montréal');
+    document.getElementById('hero-date').textContent = '📅 '+next.date+' (heure de l\'Est)';
+    document.getElementById('hero-lieu').textContent = '📍 '+next.lieu;
+    document.getElementById('hero-tv').innerHTML = tvBadges(next.tv);
+    var chrono=document.getElementById('hero-chrono');
+    if(now<next.ts){
+      chrono.style.display='flex';
+      document.getElementById('hero-msg').textContent='';
+      var r=rest(next.ts);
+      document.getElementById('c-j').textContent=r.j;
+      document.getElementById('c-h').textContent=pad(r.h);
+      document.getElementById('c-m').textContent=pad(r.m);
+      document.getElementById('c-s').textContent=pad(r.s);
+    } else {
+      chrono.style.display='none';
+      document.getElementById('hero-msg').textContent='🔴 Ce match est EN DIRECT!';
+    }
+  } else {
+    document.getElementById('hero-vs').textContent='Saison régulière terminée';
+    document.getElementById('hero-date').textContent='';
+    document.getElementById('hero-lieu').textContent='';
+    document.getElementById('hero-tv').innerHTML='';
+    document.getElementById('hero-chrono').style.display='none';
+    document.getElementById('hero-msg').textContent='🏆 Surveillez les éliminatoires de la Coupe MLS!';
+  }
+}
+tick();
+setInterval(tick,1000);
+
+/* ============ MINI-CLIENT MQTT INTEGRE (aucune librairie externe!) ============ */
+function MiniMQTT(opts){
+  var ws=null, buf=[], blen=0, pidc=1, pingT=null, dead=false;
+  var M=this;
+  M.onmessage=null; M.onopen=null; M.onclose=null;
+  function ustr(s){
+    var b=unescape(encodeURIComponent(s));
+    var a=[(b.length>>8)&255, b.length&255];
+    for(var i=0;i<b.length;i++)a.push(b.charCodeAt(i));
+    return a;
+  }
+  function varlen(n){
+    var a=[];
+    do{var d=n%128;n=Math.floor(n/128);if(n>0)d|=128;a.push(d);}while(n>0);
+    return a;
+  }
+  function packet(t,body){return new Uint8Array([t].concat(varlen(body.length),body));}
+  M.publish=function(topic,payload){
+    if(!ws||ws.readyState!==1)return false;
+    var b=ustr(topic);
+    var pl=unescape(encodeURIComponent(payload));
+    for(var i=0;i<pl.length;i++)b.push(pl.charCodeAt(i));
+    try{ws.send(packet(0x30,b));return true;}catch(e){return false;}
+  };
+  M.disconnect=function(){dead=true;if(pingT){clearInterval(pingT);pingT=null;}if(ws){try{ws.close();}catch(e){}}};
+  ws=new WebSocket(opts.url,'mqtt');
+  ws.binaryType='arraybuffer';
+  ws.onopen=function(){
+    var vh=ustr('MQTT').concat([4,2,0,45]);
+    var pl=ustr(opts.clientId);
+    ws.send(packet(0x10,vh.concat(pl)));
+  };
+  ws.onerror=function(){if(M.onclose)M.onclose();};
+  ws.onclose=function(){if(pingT){clearInterval(pingT);pingT=null;}if(!dead&&M.onclose)M.onclose();};
+  ws.onmessage=function(ev){
+    var d=new Uint8Array(ev.data);
+    for(var i=0;i<d.length;i++)buf.push(d[i]);
+    blen+=d.length;
+    parsePkts();
+  };
+  function parsePkts(){
+    for(;;){
+      if(blen<2)return;
+      var t=buf[0],i=1,mult=1,rl=0,bb;
+      do{if(i>=blen)return;bb=buf[i++];rl+=(bb&127)*mult;mult*=128;}while(bb&128);
+      if(blen<i+rl)return;
+      var body=buf.slice(i,i+rl);
+      buf.splice(0,i+rl);blen-=(i+rl);
+      if(t===0x20){/* CONNACK */
+        if(body[1]===0){
+          var pid=pidc++;
+          var sub=ustr(opts.topic);sub.push(0);
+          ws.send(packet(0x82,[(pid>>8)&255,pid&255].concat(sub)));
+          pingT=setInterval(function(){try{ws.send(new Uint8Array([0xC0,0x00]));}catch(e){}},40000);
+          if(M.onopen)M.onopen();
+        }else{
+          if(M.onclose)M.onclose();
+        }
+      }else if((t&240)===48){/* PUBLISH QoS0 */
+        var tl=(body[0]<<8)|body[1];
+        var raw='';
+        for(var j=2+tl;j<body.length;j++)raw+=String.fromCharCode(body[j]);
+        var pl='';
+        try{pl=decodeURIComponent(escape(raw));}catch(e){pl=raw;}
+        if(M.onmessage)M.onmessage(pl);
+      }
+    }
+  }
+}
+
+/* ===== CHAT v4.0 — HYBRIDE : serveur Render (SSE) + MQTT public en secours ===== */
+var TOPIC='cfm-partisans/x7k2q9/salon';  /* 👈 le salon — change-le pour un salon privé */
+var RELAIS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081/mqtt'];
+
+var chatBtn=document.getElementById('chat-btn'),
+    panel=document.getElementById('chat-panel'),
+    closeBtn=document.getElementById('chat-close'),
+    recoBtn=document.getElementById('chat-reco'),
+    notifBtn=document.getElementById('chat-notif'),
+    dot=document.getElementById('chat-dot'),
+    msgs=document.getElementById('chat-msgs'),
+    form=document.getElementById('chat-form'),
+    input=document.getElementById('chat-in'),
+    statusEl=document.getElementById('chat-status'),
+    debugEl=document.getElementById('chat-debug'),
+    salonLive=document.getElementById('salon-live');
+
+var store=(function(){
+  try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return localStorage;}
+  catch(e){var m={};return{getItem:function(k){return m[k]||null;},setItem:function(k,v){m[k]=v;}};}
+})();
+var cid=store.getItem('cfm-cid');
+if(!cid){cid=Math.random().toString(36).slice(2)+Date.now().toString(36);store.setItem('cfm-cid',cid);}
+var pseudo=store.getItem('cfm-pseudo')||'';
+var unread=0, open=false, errCount=0, recvCount=0, sentCount=0, connecte=false;
+
+function heure(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());}
+function barre(ok){
+  if(ok){salonLive.classList.remove('err');salonLive.textContent='📡 🟢 '+TOPIC+' · reçus:'+recvCount+' · '+heure();}
+  else{salonLive.classList.add('err');salonLive.textContent='📡 🔴 '+TOPIC+' · erreurs:'+errCount+' · '+heure();}
+}
+function debug(){debugEl.textContent='🧪 reçus:'+recvCount+' · envoyés:'+sentCount+' · erreurs:'+errCount+' · '+heure();}
+function beep(){
+  try{
+    var C=window.AudioContext||window.webkitAudioContext;
+    if(!C)return;
+    var c=beep.c||(beep.c=new C());
+    if(c.state==='suspended')c.resume();
+    var o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.frequency.value=880;
+    g.gain.setValueAtTime(.08,c.currentTime);
+    o.start();
+    o.frequency.setValueAtTime(660,c.currentTime+.12);
+    g.gain.setValueAtTime(.0001,c.currentTime+.3);
+    o.stop(c.currentTime+.32);
+  }catch(e){}
+}
+function majCloche(){
+  if(!('Notification' in window)){notifBtn.style.display='none';return;}
+  if(Notification.permission==='granted'){notifBtn.textContent='🔔';notifBtn.classList.add('on');}
+  else if(Notification.permission==='denied'){notifBtn.textContent='🚫';notifBtn.classList.remove('on');}
+  else{notifBtn.textContent='🔕';notifBtn.classList.remove('on');}
+}
+function activerNotifs(){
+  if(!('Notification' in window)){sysMsg('⚠️ Ton navigateur ne supporte pas les notifications');return;}
+  if(Notification.permission==='granted'){notify('🔔 Test CFM','Les notifications fonctionnent!');return;}
+  if(Notification.permission==='denied'){sysMsg('⚠️ Notifications bloquées : Chrome ⋮ → Paramètres du site → Notifications → Autoriser.');return;}
+  Notification.requestPermission().then(function(p){
+    majCloche();
+    if(p==='granted'){sysMsg('🔔 Notifications activées!');notify('🔔 Notifications activées','Tu seras avisé de chaque message!');}
+  });
+}
+function notify(titre,corps){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{
+    var n=new Notification(titre,{body:corps,tag:'cfm-chat',renotify:true,vibrate:[200,100,200]});
+    n.onclick=function(){window.focus();ouvrir();n.close();};
+  }catch(e){}
+}
+notifBtn.onclick=activerNotifs;
+majCloche();
+
+function sysMsg(t){
+  var d=document.createElement('div');
+  d.className='msg sys';d.textContent=t;
+  msgs.appendChild(d);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function addMsg(who,text,moi,time){
+  var d=document.createElement('div');
+  d.className='msg'+(moi?' moi':'');
+  var dt=new Date(time||Date.now());
+  var w=document.createElement('div');w.className='who';w.textContent=who;
+  var t=document.createElement('div');t.textContent=text;
+  var q=document.createElement('div');q.className='quand';q.textContent=pad(dt.getHours())+' h '+pad(dt.getMinutes());
+  d.appendChild(w);d.appendChild(t);d.appendChild(q);
+  msgs.appendChild(d);
+  while(msgs.children.length>150)msgs.removeChild(msgs.firstChild);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+var mqtt=null, es=null, esBase='', connGen=0, moteur='';
+var SERVEURS=(function(){
+  var l=[];
+  if(location.protocol.indexOf('http')===0)l.push(location.origin);
+  l.push('https://impact-de-montr-al-chat.onrender.com'); /* 💬 salon central — les copies partagées le rejoignent */
+  return l;
+})();
+
+function couperTout(){
+  if(es){try{es.onopen=null;es.onmessage=null;es.onerror=null;es.close();}catch(e){}es=null;}
+  if(mqtt){try{mqtt.onclose=null;mqtt.disconnect();}catch(e){}mqtt=null;}
+}
+function connecter(){
+  var gen=++connGen;
+  connecte=false;moteur='';
+  couperTout();
+  essayerServeurs(gen,0);
+}
+
+/* ---- canal A : serveur web Render via SSE (port 443 — passe partout) ---- */
+function essayerServeurs(gen,idx){
+  if(gen!==connGen)return;
+  if(idx>=SERVEURS.length){return essayerMqtt(gen,0);}
+  var url=SERVEURS[idx];
+  statusEl.textContent='🟡 connexion… (serveur '+url.replace('https://','').replace('http://','').split('/')[0]+')';
+  try{
+    es=new EventSource(url+'/stream');
+  }catch(e){es=null;errCount++;debug();return essayerServeurs(gen,idx+1);}
+  esBase=url;
+  var courant=es, ouvert=false;
+  var wd=setTimeout(function(){
+    if(gen===connGen && !ouvert){
+      try{courant.onopen=null;courant.onmessage=null;courant.onerror=null;courant.close();}catch(e){}
+      if(courant===es)es=null;
+      errCount++;debug();
+      essayerServeurs(gen,idx+1);
+    }
+  },9000);   /* le gratuit de Render dort après 15 min : on lui laisse le temps de se réveiller */
+  courant.onopen=function(){
+    if(gen!==connGen||courant!==es)return;
+    clearTimeout(wd);
+    if(!ouvert){
+      ouvert=true;connecte=true;moteur='serveur';
+      statusEl.textContent='🟢 en ligne · serveur Render (salon central)';
+      barre(true);debug();
+      sysMsg('✅ Connecté au serveur de clavardage!');
+    }
+  };
+  courant.onmessage=function(ev){
+    if(gen!==connGen||courant!==es)return;
+    var o;try{o=JSON.parse(ev.data);}catch(e){return;}
+    if(o.sys==='reprise'){sysMsg('— ↻ Reprise en direct —');return;}
+    if(!o||!o.t)return;
+    recvCount++;debug();barre(true);
+    if(o.i===cid)return;
+    addMsg(o.n||'Supporter',o.t,false,o.tm);
+    if(o.h){return;}              /* historique : affiché sans bip ni notification */
+    unread++;
+    dot.style.display='flex';
+    dot.textContent=unread>99?'99+':unread;
+    beep();
+    document.title='('+unread+') CF Montréal — Matchs';
+    notify('💬 '+(o.n||'Supporter'),o.t);
+    if(navigator.vibrate){try{navigator.vibrate([200,100,200]);}catch(e){}}
+  };
+  courant.onerror=function(){
+    if(gen!==connGen||courant!==es)return;
+    if(ouvert){              /* connexion coupée : EventSource réessaie tout seul */
+      connecte=false;errCount++;
+      statusEl.textContent='🟠 reconnexion au serveur… (le serveur gratuit se réveille)';
+      barre(false);debug();
+    }
+  };
+}
+
+/* ---- canal B : courtiers MQTT publics (secours — aucun serveur requis) ---- */
+function essayerMqtt(gen,idx){
+  if(gen!==connGen)return;
+  if(idx>=RELAIS.length){
+    errCount++;barre(false);debug();
+    statusEl.textContent='🔴 aucun canal répond — nouvel essai bientôt…';
+    setTimeout(function(){if(gen===connGen)connecter();},6000);
+    return;
+  }
+  var url=RELAIS[idx];
+  statusEl.textContent='🟡 connexion… ('+url.replace('wss://','').replace('/mqtt','')+')';
+  try{
+    mqtt=new MiniMQTT({url:url,clientId:'cfm-'+cid,topic:TOPIC});
+  }catch(e){
+    errCount++;barre(false);debug();
+    return essayerMqtt(gen,idx+1);
+  }
+  var m=mqtt;
+  setTimeout(function(){
+    if(gen===connGen && m===mqtt && !connecte){
+      errCount++;barre(false);debug();
+      statusEl.textContent='🟠 délai dépassé — canal suivant…';
+      try{m.onclose=null;m.disconnect();}catch(e){}
+      if(m===mqtt)mqtt=null;
+      essayerMqtt(gen,idx+1);
+    }
+  },5000);
+  m.onopen=function(){
+    if(gen!==connGen||m!==mqtt)return;
+    connecte=true;moteur='mqtt';
+    statusEl.textContent='🟢 en ligne · canal public : '+TOPIC;
+    barre(true);debug();
+    sysMsg('✅ Connecté au salon temps réel (canal public)!');
+    setTimeout(function(){if(gen===connGen)connecter();},45000); /* re-sonde le salon central dans 45 s */
+  };
+  m.onmessage=function(payload){
+    if(gen!==connGen||m!==mqtt)return;
+    var o;try{o=JSON.parse(payload);}catch(e){return;}
+    if(!o||!o.t)return;
+    recvCount++;debug();barre(true);
+    if(o.i===cid)return;
+    addMsg(o.n||'Supporter',o.t,false,o.tm);
+    unread++;
+    dot.style.display='flex';
+    dot.textContent=unread>99?'99+':unread;
+    beep();
+    document.title='('+unread+') CF Montréal — Matchs';
+    notify('💬 '+(o.n||'Supporter'),o.t);
+    if(navigator.vibrate){try{navigator.vibrate([200,100,200]);}catch(e){}}
+  };
+  m.onclose=function(){
+    if(gen!==connGen||m!==mqtt)return;
+    if(connecte){statusEl.textContent='🔴 connexion perdue — reconnexion…';}
+    connecte=false;errCount++;
+    barre(false);debug();
+    essayerMqtt(gen,idx+1);
+  };
+}
+connecter();
+recoBtn.onclick=function(){errCount=0;connecter();};
+window.addEventListener('online',function(){connecter();});
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&!connecte)connecter();});
+
+function ouvrir(){
+  open=true;
+  panel.classList.add('open');
+  unread=0;
+  dot.style.display='none';
+  document.title='Prochains matchs — CF Montréal 2026';
+  msgs.scrollTop=msgs.scrollHeight;
+  if('Notification' in window && Notification.permission==='default'){
+    Notification.requestPermission().then(majCloche);
+  }
+  majCloche();
+  input.focus();
+}
+function fermer(){open=false;panel.classList.remove('open');}
+chatBtn.onclick=function(){ if(open){fermer();}else{ouvrir();} };
+closeBtn.onclick=fermer;
+
+form.onsubmit=function(ev){
+  ev.preventDefault();
+  var t=input.value.trim();
+  if(!t)return;
+  if(!pseudo){
+    pseudo=(prompt('Choisis ton pseudo pour le chat :')||'').trim().slice(0,20)||'Supporter';
+    store.setItem('cfm-pseudo',pseudo);
+  }
+  input.value='';
+  var envoye=false;
+  if(connecte&&moteur==='serveur'&&es){
+    envoye=true;
+    fetch(esBase+'/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({n:pseudo,t:t,i:cid,tm:Date.now()})}).then(function(r){if(!r.ok)sysMsg('⚠️ Envoi refusé par le serveur ('+r.status+')');}).catch(function(){sysMsg('⚠️ Envoi échoué — le serveur se réveille peut-être, réessaie dans 30 s');connecter();});
+  }else if(connecte&&moteur==='mqtt'&&mqtt){
+    envoye=mqtt.publish(TOPIC,JSON.stringify({n:pseudo,t:t,i:cid,tm:Date.now()}));
+  }
+  if(envoye){
+    addMsg(pseudo,t,true,Date.now());
+    sentCount++;
+    debugEl.textContent='🧪 envoyé ✓ · '+heure();
+  }else{
+    addMsg(pseudo,t,true,Date.now());
+    sysMsg('⚠️ Pas connecté (reçus:'+recvCount+' err:'+errCount+') — touche 🔄 ou attends la reconnexion');
+    connecter();
+  }
+  debug();
+};
+sysMsg('💬 Salon temps réel : '+TOPIC);
+</script>
+</body>
+</html>
