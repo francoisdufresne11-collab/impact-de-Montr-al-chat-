@@ -7,7 +7,7 @@
 <title>Prochains matchs — CF Montréal 2026</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:#0b1220;color:#e8edf6;min-height:100vh;padding-bottom:110px}
+body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:#0b1220;color:#e8edf6;min-height:100vh;padding-bottom:130px}
 header{background:linear-gradient(135deg,#0047ab 0%,#00205b 65%,#000 100%);padding:30px 16px;text-align:center;border-bottom:3px solid #3b82f6}
 header .logo{font-size:2.2rem}
 header h1{font-size:1.45rem;margin-top:4px}
@@ -43,6 +43,8 @@ header p{opacity:.75;margin-top:6px;font-size:.85rem}
 @keyframes blink{50%{opacity:.35}}
 .cd{font-variant-numeric:tabular-nums;background:#060b16;border:1px dashed #33456e;border-radius:10px;padding:7px 12px;font-size:.92rem;color:#a5b4fc;margin-top:8px;display:inline-block;font-weight:700}
 footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height:1.6}
+#salon-live{position:fixed;left:8px;bottom:8px;max-width:65vw;background:#052e16;color:#86efac;border:1px solid #16a34a;border-radius:10px;padding:6px 10px;font-size:.62rem;font-family:monospace;z-index:900;word-break:break-all;line-height:1.5}
+#salon-live.err{background:#450a0a;color:#fca5a5;border-color:#dc2626}
 #chat-btn{position:fixed;right:16px;bottom:16px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#0047ab);border:2px solid #60a5fa;color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.55);z-index:1000}
 #chat-btn .dot{position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:20px;min-width:24px;height:24px;font-size:.72rem;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0b1220}
 #chat-panel{position:fixed;right:16px;bottom:88px;width:330px;max-width:94vw;height:460px;max-height:72vh;background:#0f172a;border:2px solid #3b82f6;border-radius:16px;display:none;flex-direction:column;overflow:hidden;z-index:1001;box-shadow:0 14px 44px rgba(0,0,0,.65)}
@@ -211,10 +213,12 @@ footer{text-align:center;font-size:.72rem;opacity:.5;margin-top:26px;line-height
 
   <footer>
     Heures affichées : heure de l'Est (Montréal) · Matchs RDS précédés d'une émission d'avant-match de 30 min<br>
-    Sources : calendrier MLS 2026 &amp; RDS.ca · Page v1.4<br>
+    Sources : calendrier MLS 2026 &amp; RDS.ca · Page v1.5<br>
     💬 Chat hébergé par le propriétaire (Render ou Termux + cloudflared)
   </footer>
 </div>
+
+<div id="salon-live">📡 connexion…</div>
 
 <button id="chat-btn" title="Chat des partisans">💬<span class="dot" id="chat-dot">0</span></button>
 <div id="chat-panel">
@@ -311,7 +315,7 @@ function tick(){
 tick();
 setInterval(tick,1000);
 
-/* ============ CHAT v1.4 (notifications systeme a chaque message) ============ */
+/* ============ CHAT v1.5 ============ */
 var chatBtn=document.getElementById('chat-btn'),
     panel=document.getElementById('chat-panel'),
     closeBtn=document.getElementById('chat-close'),
@@ -322,15 +326,25 @@ var chatBtn=document.getElementById('chat-btn'),
     form=document.getElementById('chat-form'),
     input=document.getElementById('chat-in'),
     statusEl=document.getElementById('chat-status'),
-    debugEl=document.getElementById('chat-debug');
-var cid=localStorage.getItem('cfm-cid');
-if(!cid){cid=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('cfm-cid',cid);}
-var pseudo=localStorage.getItem('cfm-pseudo')||'';
+    debugEl=document.getElementById('chat-debug'),
+    salonLive=document.getElementById('salon-live');
+
+var store=(function(){
+  try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return localStorage;}
+  catch(e){var m={};return{getItem:function(k){return m[k]||null;},setItem:function(k,v){m[k]=v;}};}
+})();
+var cid=store.getItem('cfm-cid');
+if(!cid){cid=Math.random().toString(36).slice(2)+Date.now().toString(36);store.setItem('cfm-cid',cid);}
+var pseudo=store.getItem('cfm-pseudo')||'';
 var since=0, unread=0, open=false, firstBatch=true;
 var errCount=0, lastTotal=0, verSrv='?';
 
 function setStatus(t){statusEl.textContent=t;}
 function heure(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());}
+function salonLigne(extra){
+  salonLive.classList.remove('err');
+  salonLive.textContent='📡 '+(location.host||'FICHIER LOCAL')+' · serveur v'+verSrv+' · '+lastTotal+' msg · '+heure()+(extra||'');
+}
 function debug(){
   var aff=msgs.querySelectorAll('.msg:not(.sys)').length;
   debugEl.textContent='🧪 affichés:'+aff+' · serveur:'+lastTotal+' · erreurs:'+errCount+' · '+heure();
@@ -352,41 +366,20 @@ function beep(){
   }catch(e){}
 }
 
-/* --- NOTIFICATIONS SYSTEME --- */
 function majCloche(){
-  if(!('Notification' in window)){
-    notifBtn.style.display='none';
-    return;
-  }
-  if(Notification.permission==='granted'){
-    notifBtn.textContent='🔔'; notifBtn.classList.add('on');
-    notifBtn.title='Notifications activées';
-  } else if(Notification.permission==='denied'){
-    notifBtn.textContent='🚫'; notifBtn.classList.remove('on');
-    notifBtn.title='Notifications bloquées dans les paramètres du navigateur';
-  } else {
-    notifBtn.textContent='🔕'; notifBtn.classList.remove('on');
-    notifBtn.title='Touche pour activer les notifications';
-  }
+  if(!('Notification' in window)){notifBtn.style.display='none';return;}
+  if(Notification.permission==='granted'){notifBtn.textContent='🔔';notifBtn.classList.add('on');notifBtn.title='Notifications activées';}
+  else if(Notification.permission==='denied'){notifBtn.textContent='🚫';notifBtn.classList.remove('on');notifBtn.title='Notifications bloquées dans les paramètres';}
+  else{notifBtn.textContent='🔕';notifBtn.classList.remove('on');notifBtn.title='Touche pour activer les notifications';}
 }
 function activerNotifs(){
-  if(!('Notification' in window)){
-    sysMsg('⚠️ Ton navigateur ne supporte pas les notifications');
-    return;
-  }
-  if(Notification.permission==='granted'){
-    sysMsg('🔔 Notifications déjà activées!');
-    notify('🔔 Test CFM','Les notifications fonctionnent!');
-    return;
-  }
-  if(Notification.permission==='denied'){
-    sysMsg('⚠️ Bloquées. Réactive : Chrome ⋮ → Paramètres → Notifications → Autoriser ce site. Vérifie aussi les réglages Android (Apps → Chrome → Notifications).');
-    return;
-  }
+  if(!('Notification' in window)){sysMsg('⚠️ Ton navigateur ne supporte pas les notifications');return;}
+  if(Notification.permission==='granted'){notify('🔔 Test CFM','Les notifications fonctionnent!');return;}
+  if(Notification.permission==='denied'){sysMsg('⚠️ Bloquées : Chrome ⋮ → Paramètres du site → Notifications → Autoriser.');return;}
   Notification.requestPermission().then(function(p){
     majCloche();
     if(p==='granted'){
-      sysMsg('🔔 Notifications activées! Tu seras avisé de chaque nouveau message.');
+      sysMsg('🔔 Notifications activées!');
       notify('🔔 Notifications activées','Bienvenue dans le chat des partisans!');
     }
   });
@@ -395,13 +388,7 @@ function notify(titre,corps){
   if(!('Notification' in window))return;
   if(Notification.permission!=='granted')return;
   try{
-    var n=new Notification(titre,{
-      body:corps,
-      tag:'cfm-chat',
-      renotify:true,
-      vibrate:[200,100,200],
-      silent:false
-    });
+    var n=new Notification(titre,{body:corps,tag:'cfm-chat',renotify:true,vibrate:[200,100,200],silent:false});
     n.onclick=function(){window.focus();if(window.ouvrirChat)window.ouvrirChat();n.close();};
   }catch(e){}
 }
@@ -444,6 +431,7 @@ function poll(){
     verSrv=d.ver||'?';
     lastTotal=(typeof d.total==='number')?d.total:lastTotal;
     setStatus('🟢 en ligne · serveur v'+verSrv+' · salon : '+(location.host||'fichier local'));
+    salonLigne();
     var nouveaux=0,dernier=null;
     (d.msgs||[]).forEach(function(m){
       if(m.i!==cid){
@@ -460,15 +448,15 @@ function poll(){
       dot.textContent=unread>99?'99+':unread;
       beep();
       document.title='('+unread+') CF Montréal — Matchs';
-      if(dernier){
-        notify('💬 '+(dernier.n||'Supporter'),dernier.t||'');
-      }
+      if(dernier){notify('💬 '+(dernier.n||'Supporter'),dernier.t||'');}
       if(navigator.vibrate){try{navigator.vibrate([200,100,200]);}catch(e){}}
     }
   })
   .catch(function(){
     errCount++;
     setStatus('🔴 injoignable · salon : '+(location.host||'fichier local'));
+    salonLive.classList.add('err');
+    salonLive.textContent='📡 '+(location.host||'FICHIER LOCAL')+' · HORS LIGNE (x'+errCount+') · '+heure();
     debug();
   });
 }
@@ -489,10 +477,7 @@ function ouvrir(){
   input.focus();
 }
 window.ouvrirChat=ouvrir;
-function fermer(){
-  open=false;
-  panel.classList.remove('open');
-}
+function fermer(){open=false;panel.classList.remove('open');}
 chatBtn.onclick=function(){ if(open){fermer();}else{ouvrir();} };
 closeBtn.onclick=fermer;
 resyncBtn.onclick=function(){ resync(); };
@@ -503,7 +488,7 @@ form.onsubmit=function(ev){
   if(!t)return;
   if(!pseudo){
     pseudo=(prompt('Choisis ton pseudo pour le chat :')||'').trim().slice(0,20)||'Supporter';
-    localStorage.setItem('cfm-pseudo',pseudo);
+    store.setItem('cfm-pseudo',pseudo);
   }
   input.value='';
   addMsg(pseudo,t,true);
@@ -512,7 +497,9 @@ form.onsubmit=function(ev){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok){
-        setStatus('🟢 envoyé ✓ · serveur a '+d.total+' message(s) · salon : '+(location.host||'fichier local'));
+        lastTotal=d.total;
+        salonLigne(' · ✓ envoyé');
+        setStatus('🟢 envoyé ✓ · serveur a '+d.total+' message(s)');
       } else {
         sysMsg('⚠️ Message refusé par le serveur');
       }
@@ -525,7 +512,7 @@ form.onsubmit=function(ev){
 };
 sysMsg('💬 Salon : '+(location.host||'FICHIER LOCAL'));
 if(!location.host){
-  sysMsg('⚠️ Le chat ne fonctionne PAS en ouvrant le fichier. Utilise le LIEN WEB (https://…onrender.com)!');
+  sysMsg('⚠️ Le chat ne fonctionne PAS en ouvrant le fichier. Utilise le LIEN WEB!');
 }
 </script>
 </body>

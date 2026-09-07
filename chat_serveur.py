@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-VERSION = '1.3'
+VERSION = '1.5'
 import json, os, time, socket, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -106,5 +106,5 @@ class H(BaseHTTPRequestHandler):
         pass
 
 print('=== Serveur CFM v' + VERSION + ' sur le port', PORT, '===')
-print('Test local : http://localhost:' + str(PORT) + '/api/ping')
-ThreadingHTTPServer((HOST, PORT), H).serve_forever()
+ThreadingInternet = ThreadingHTTPServer((HOST, PORT), H)
+ThreadingInternet.serve_forever()
